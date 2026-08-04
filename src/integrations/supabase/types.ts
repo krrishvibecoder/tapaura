@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      client_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          kind: string
+          position: number
+          subtitle: string | null
+          title: string
+          url: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          position?: number
+          subtitle?: string | null
+          title: string
+          url: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          position?: number
+          subtitle?: string | null
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          created_at: string
+          cta_label: string
+          cta_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          published: boolean
+          slug: string
+          tagline: string | null
+          theme: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_label?: string
+          cta_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          published?: boolean
+          slug: string
+          tagline?: string | null
+          theme?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_label?: string
+          cta_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          published?: boolean
+          slug?: string
+          tagline?: string | null
+          theme?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
