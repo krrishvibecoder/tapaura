@@ -458,13 +458,12 @@ function EditClient() {
                   ctaLabel: ctaLabel || "Connect With Us",
                   ctaUrl: ctaUrl || null,
                   theme,
-                  links: links.map((link, index) => ({
+                  links: links.map((link) => ({
                     id: link.key,
                     kind: link.kind,
                     title: link.title || getLinkKind(link.kind).defaultTitle,
                     subtitle: link.subtitle || null,
                     url: link.url || "#",
-                    position: index,
                   })),
                 }}
               />
