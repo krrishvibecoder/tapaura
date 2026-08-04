@@ -61,7 +61,7 @@ export type Database = {
           cta_label: string
           cta_url: string | null
           id: string
-          logo_url: string | null
+          logo_path: string | null
           name: string
           owner_id: string
           published: boolean
@@ -75,7 +75,7 @@ export type Database = {
           cta_label?: string
           cta_url?: string | null
           id?: string
-          logo_url?: string | null
+          logo_path?: string | null
           name: string
           owner_id: string
           published?: boolean
@@ -89,7 +89,7 @@ export type Database = {
           cta_label?: string
           cta_url?: string | null
           id?: string
-          logo_url?: string | null
+          logo_path?: string | null
           name?: string
           owner_id?: string
           published?: boolean
