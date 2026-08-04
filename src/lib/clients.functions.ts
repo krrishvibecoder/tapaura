@@ -17,12 +17,12 @@ const clientFields = z.object({
 
 
 const linkInput = z.object({
-  id: z.string().uuid().optional(),
   kind: z.string().trim().min(1).max(40),
   title: z.string().trim().min(1).max(60),
-  subtitle: z.string().trim().max(120).nullable().optional(),
+  subtitle: z.string().trim().max(120).nullable(),
   url: z.string().trim().min(1).max(500),
 });
+
 
 export const listMyClients = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
