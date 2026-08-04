@@ -7,13 +7,14 @@ const slugRe = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 const clientFields = z.object({
   name: z.string().trim().min(1).max(80),
   slug: z.string().trim().toLowerCase().regex(slugRe, "Use lowercase letters, numbers and dashes"),
-  tagline: z.string().trim().max(140).nullable().optional(),
-  logo_path: z.string().trim().max(300).nullable().optional(),
+  tagline: z.string().trim().max(140).nullable(),
+  logo_path: z.string().trim().max(300).nullable(),
   cta_label: z.string().trim().min(1).max(40),
-  cta_url: z.string().trim().max(500).nullable().optional(),
+  cta_url: z.string().trim().max(500).nullable(),
   theme: z.enum(["blue", "cream", "ink"]),
   published: z.boolean(),
 });
+
 
 const linkInput = z.object({
   id: z.string().uuid().optional(),
