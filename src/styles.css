@@ -19,6 +19,25 @@
  */
 
 @theme inline {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-tile-instagram: var(--tile-instagram);
+  --color-tile-instagram-foreground: var(--tile-instagram-fg);
+  --color-tile-whatsapp: var(--tile-whatsapp);
+  --color-tile-whatsapp-foreground: var(--tile-whatsapp-fg);
+  --color-tile-google: var(--tile-google);
+  --color-tile-google-foreground: var(--tile-google-fg);
+  --color-tile-linkedin: var(--tile-linkedin);
+  --color-tile-linkedin-foreground: var(--tile-linkedin-fg);
+  --color-tile-facebook: var(--tile-facebook);
+  --color-tile-facebook-foreground: var(--tile-facebook-fg);
+  --color-tile-youtube: var(--tile-youtube);
+  --color-tile-youtube-foreground: var(--tile-youtube-fg);
+  --color-tile-x: var(--tile-x);
+  --color-tile-x-foreground: var(--tile-x-fg);
+  --color-tile-neutral: var(--tile-neutral);
+  --color-tile-neutral-foreground: var(--tile-neutral-fg);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
