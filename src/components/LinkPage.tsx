@@ -1,5 +1,7 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ContactRound } from "lucide-react";
 import { getLinkKind, themeClass } from "@/lib/link-kinds";
+import { paletteVars } from "@/lib/palette";
+import { downloadVcf } from "@/lib/vcard";
 import type { PublicClientPage } from "@/lib/public-page.functions";
 
 export function LinkPage({ page }: { page: PublicClientPage }) {
@@ -12,7 +14,10 @@ export function LinkPage({ page }: { page: PublicClientPage }) {
   return (
     <div
       className={`${themeClass(page.theme)} min-h-screen w-full px-5 py-12`}
-      style={{ backgroundColor: "var(--lp-bg)" }}
+      style={{
+        ...(page.palette ? paletteVars(page.palette) : {}),
+        backgroundColor: "var(--lp-bg)",
+      } as React.CSSProperties}
     >
       <div className="mx-auto flex w-full max-w-sm flex-col items-center">
         <div
@@ -114,6 +119,40 @@ export function LinkPage({ page }: { page: PublicClientPage }) {
               </li>
             );
           })}
+
+          {page.vcard ? (
+            <li>
+              <button
+                type="button"
+                onClick={() => downloadVcf(page.vcard!, page.slug || "contact")}
+                className="flex w-full items-center gap-4 rounded-2xl p-4 text-left shadow-sm transition-transform hover:scale-[1.01]"
+                style={{ backgroundColor: "var(--lp-card)" }}
+              >
+                <span
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: "var(--lp-cta)", color: "var(--lp-cta-fg)" }}
+                >
+                  <ContactRound className="size-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span
+                    className="block truncate text-sm font-semibold"
+                    style={{ color: "var(--lp-card-title)" }}
+                  >
+                    Save our contact
+                  </span>
+                  <span className="block truncate text-xs" style={{ color: "var(--lp-card-sub)" }}>
+                    Tap to add {page.vcard.fullName || page.name} to your phone
+                  </span>
+                </span>
+                <ArrowUpRight
+                  className="size-4 shrink-0"
+                  style={{ color: "var(--lp-arrow)" }}
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
+          ) : null}
         </ul>
       </div>
     </div>
