@@ -64,11 +64,13 @@ export type Database = {
           logo_path: string | null
           name: string
           owner_id: string
+          palette: Json | null
           published: boolean
           slug: string
           tagline: string | null
           theme: string
           updated_at: string
+          vcard: Json | null
         }
         Insert: {
           created_at?: string
@@ -78,11 +80,13 @@ export type Database = {
           logo_path?: string | null
           name: string
           owner_id: string
+          palette?: Json | null
           published?: boolean
           slug: string
           tagline?: string | null
           theme?: string
           updated_at?: string
+          vcard?: Json | null
         }
         Update: {
           created_at?: string
@@ -92,11 +96,13 @@ export type Database = {
           logo_path?: string | null
           name?: string
           owner_id?: string
+          palette?: Json | null
           published?: boolean
           slug?: string
           tagline?: string | null
           theme?: string
           updated_at?: string
+          vcard?: Json | null
         }
         Relationships: []
       }
