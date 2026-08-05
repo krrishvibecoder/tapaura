@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { PublicClientPage } from "./public-page.functions";
+import { parsePalette } from "./palette";
+import { parseVcard } from "./vcard";
 
 function publicClient() {
   const url = process.env["SUPABASE_URL"];
@@ -15,7 +17,7 @@ export async function getPublishedClientPage(slug: string): Promise<PublicClient
   const supabase = publicClient();
   const { data: client, error } = await supabase
     .from("clients")
-    .select("id, name, slug, tagline, logo_path, cta_label, cta_url, theme")
+    .select("id, name, slug, tagline, logo_path, cta_label, cta_url, theme, palette, vcard")
     .eq("slug", slug.toLowerCase())
     .eq("published", true)
     .maybeSingle();
@@ -45,6 +47,8 @@ export async function getPublishedClientPage(slug: string): Promise<PublicClient
     ctaLabel: client.cta_label,
     ctaUrl: client.cta_url,
     theme: client.theme,
+    palette: parsePalette(client.palette),
+    vcard: parseVcard(client.vcard),
     links: links ?? [],
   };
 }

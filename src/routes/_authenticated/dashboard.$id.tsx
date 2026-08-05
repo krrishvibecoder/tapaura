@@ -11,7 +11,17 @@ import {
   deleteClientPage,
 } from "@/lib/clients.functions";
 import { LINK_KINDS, getLinkKind, THEMES, slugify } from "@/lib/link-kinds";
+import {
+  HOUSE_PALETTES,
+  extractPalettesFromLogo,
+  isValidHex,
+  parsePalette,
+  type Palette,
+  type PaletteOption,
+} from "@/lib/palette";
+import { EMPTY_VCARD, parseVcard, type VCardData } from "@/lib/vcard";
 import { LinkPage } from "@/components/LinkPage";
+import { PageQrCode } from "@/components/PageQrCode";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +83,10 @@ function EditClient() {
   const [logoPath, setLogoPath] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [links, setLinks] = useState<DraftLink[]>([]);
+  const [palette, setPalette] = useState<Palette | null>(null);
+  const [logoPalettes, setLogoPalettes] = useState<PaletteOption[]>([]);
+  const [vcardOn, setVcardOn] = useState(false);
+  const [vcard, setVcard] = useState<VCardData>(EMPTY_VCARD);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -86,6 +100,10 @@ function EditClient() {
     setTheme(c.theme);
     setPublished(c.published);
     setLogoPath(c.logo_path);
+    setPalette(parsePalette(c.palette));
+    const savedVcard = parseVcard(c.vcard);
+    setVcardOn(savedVcard !== null);
+    setVcard(savedVcard ?? { ...EMPTY_VCARD, fullName: c.name });
     setLinks(
       data.links.map((link, index) => ({
         key: `${link.id}-${index}`,
@@ -130,6 +148,17 @@ function EditClient() {
     }
     setLogoPath(path);
     toast.success("Logo uploaded — remember to save");
+
+    try {
+      const options = await extractPalettesFromLogo(file);
+      setLogoPalettes(options);
+      if (options[0]) {
+        setPalette({ primary: options[0].primary, accent: options[0].accent });
+        setTheme("custom");
+      }
+    } catch {
+      setLogoPalettes([]);
+    }
   }
 
   function addLink(kind: string) {
@@ -174,8 +203,16 @@ function EditClient() {
           logo_path: logoPath,
           cta_label: ctaLabel.trim() || "Connect With Us",
           cta_url: ctaUrl.trim() || null,
-          theme: theme as "blue" | "cream" | "ink",
+          theme: (palette ? "custom" : theme) as "blue" | "cream" | "ink" | "custom",
           published,
+          palette,
+          vcard: vcardOn
+            ? {
+                ...vcard,
+                fullName: vcard.fullName.trim() || name.trim(),
+                socials: vcard.socials.filter((s) => s.url.trim().length > 0),
+              }
+            : null,
         },
       });
       await saveLinks({
@@ -209,6 +246,9 @@ function EditClient() {
       toast.error(error instanceof Error ? error.message : "Could not delete");
     }
   }
+
+  const publicUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/${slug}` : `/${slug}`;
 
   if (isLoading) {
     return (
@@ -303,11 +343,18 @@ function EditClient() {
 
             <div className="space-y-1.5">
               <Label htmlFor="c-theme">Theme</Label>
-              <Select value={theme} onValueChange={setTheme}>
+              <Select
+                value={palette ? "custom" : theme}
+                onValueChange={(value) => {
+                  setPalette(null);
+                  setTheme(value);
+                }}
+              >
                 <SelectTrigger id="c-theme">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {palette ? <SelectItem value="custom">Custom colours</SelectItem> : null}
                   {THEMES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
@@ -316,6 +363,238 @@ function EditClient() {
                 </SelectContent>
               </Select>
             </div>
+          </section>
+
+          <section className="space-y-5 rounded-2xl border border-border bg-card p-6">
+            <div>
+              <h2 className="text-base font-semibold">Colours</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upload a logo and we pick matching palettes automatically. You can also use one of
+                ours or set your own.
+              </p>
+            </div>
+
+            {logoPalettes.length > 0 ? (
+              <div className="space-y-2">
+                <Label>From this logo</Label>
+                <div className="flex flex-wrap gap-2">
+                  {logoPalettes.map((option) => (
+                    <SwatchButton
+                      key={option.id}
+                      option={option}
+                      active={
+                        palette?.primary === option.primary && palette?.accent === option.accent
+                      }
+                      onSelect={() => {
+                        setPalette({ primary: option.primary, accent: option.accent });
+                        setTheme("custom");
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label>Our palettes</Label>
+              <div className="flex flex-wrap gap-2">
+                {HOUSE_PALETTES.map((option) => (
+                  <SwatchButton
+                    key={option.id}
+                    option={option}
+                    active={palette?.primary === option.primary && palette?.accent === option.accent}
+                    onSelect={() => {
+                      setPalette({ primary: option.primary, accent: option.accent });
+                      setTheme("custom");
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="col-primary">Background colour</Label>
+                <Input
+                  id="col-primary"
+                  type="color"
+                  className="h-10 p-1"
+                  value={palette?.primary ?? "#2f4bd0"}
+                  onChange={(e) => {
+                    if (!isValidHex(e.target.value)) return;
+                    setPalette({
+                      primary: e.target.value,
+                      accent: palette?.accent ?? "#ffd24a",
+                    });
+                    setTheme("custom");
+                  }}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="col-accent">Accent colour</Label>
+                <Input
+                  id="col-accent"
+                  type="color"
+                  className="h-10 p-1"
+                  value={palette?.accent ?? "#ffd24a"}
+                  onChange={(e) => {
+                    if (!isValidHex(e.target.value)) return;
+                    setPalette({
+                      primary: palette?.primary ?? "#2f4bd0",
+                      accent: e.target.value,
+                    });
+                    setTheme("custom");
+                  }}
+                />
+              </div>
+            </div>
+
+            {palette ? (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setPalette(null)}>
+                Back to preset theme
+              </Button>
+            ) : null}
+          </section>
+
+          <section className="space-y-5 rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold">Contact card (vCard)</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Adds a tap-to-save contact card on the link page.
+                </p>
+              </div>
+              <Switch
+                id="vcard-on"
+                checked={vcardOn}
+                onCheckedChange={(checked) => {
+                  setVcardOn(checked);
+                  if (checked && !vcard.fullName) setVcard({ ...vcard, fullName: name });
+                }}
+              />
+            </div>
+
+            {vcardOn ? (
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-name">Contact name</Label>
+                    <Input
+                      id="v-name"
+                      value={vcard.fullName}
+                      onChange={(e) => setVcard({ ...vcard, fullName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-org">Company</Label>
+                    <Input
+                      id="v-org"
+                      value={vcard.org ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, org: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-role">Role</Label>
+                    <Input
+                      id="v-role"
+                      value={vcard.role ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, role: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-phone">Phone</Label>
+                    <Input
+                      id="v-phone"
+                      value={vcard.phone ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, phone: e.target.value || null })}
+                      placeholder="+91 99999 99999"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-email">Email</Label>
+                    <Input
+                      id="v-email"
+                      value={vcard.email ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, email: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="v-website">Website</Label>
+                    <Input
+                      id="v-website"
+                      value={vcard.website ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, website: e.target.value || null })}
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="v-address">Address</Label>
+                    <Input
+                      id="v-address"
+                      value={vcard.address ?? ""}
+                      onChange={(e) => setVcard({ ...vcard, address: e.target.value || null })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Social profiles saved in the contact</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setVcard({
+                          ...vcard,
+                          socials: [...vcard.socials, { label: "Instagram", url: "" }],
+                        })
+                      }
+                    >
+                      <Plus className="size-4" aria-hidden="true" />
+                      Add profile
+                    </Button>
+                  </div>
+                  {vcard.socials.map((social, index) => (
+                    <div key={index} className="grid gap-2 sm:grid-cols-[160px_1fr_auto]">
+                      <Input
+                        value={social.label}
+                        aria-label="Profile name"
+                        placeholder="Instagram"
+                        onChange={(e) => {
+                          const next = [...vcard.socials];
+                          next[index] = { ...social, label: e.target.value };
+                          setVcard({ ...vcard, socials: next });
+                        }}
+                      />
+                      <Input
+                        value={social.url}
+                        aria-label="Profile URL"
+                        placeholder="https://instagram.com/handle"
+                        onChange={(e) => {
+                          const next = [...vcard.socials];
+                          next[index] = { ...social, url: e.target.value };
+                          setVcard({ ...vcard, socials: next });
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remove profile"
+                        onClick={() =>
+                          setVcard({
+                            ...vcard,
+                            socials: vcard.socials.filter((_, i) => i !== index),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
 
           <section className="space-y-5 rounded-2xl border border-border bg-card p-6">
@@ -444,6 +723,12 @@ function EditClient() {
         </div>
 
         <aside className="lg:sticky lg:top-8 lg:self-start">
+          <div className="mb-6 rounded-2xl border border-border bg-card p-5">
+            <p className="mb-3 text-xs font-semibold tracking-[0.15em] text-muted-foreground uppercase">
+              Page QR code
+            </p>
+            <PageQrCode url={publicUrl} fileName={slug || "link-page"} />
+          </div>
           <p className="mb-3 text-xs font-semibold tracking-[0.15em] text-muted-foreground uppercase">
             Live preview
           </p>
@@ -457,7 +742,11 @@ function EditClient() {
                   logoUrl,
                   ctaLabel: ctaLabel || "Connect With Us",
                   ctaUrl: ctaUrl || null,
-                  theme,
+                  theme: palette ? "custom" : theme,
+                  palette,
+                  vcard: vcardOn
+                    ? { ...vcard, fullName: vcard.fullName || name || "Contact" }
+                    : null,
                   links: links.map((link) => ({
                     id: link.key,
                     kind: link.kind,
@@ -472,5 +761,38 @@ function EditClient() {
         </aside>
       </div>
     </main>
+  );
+}
+
+function SwatchButton({
+  option,
+  active,
+  onSelect,
+}: {
+  option: PaletteOption;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+        active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+      }`}
+    >
+      <span className="flex">
+        <span
+          className="size-5 rounded-l-md border border-border"
+          style={{ backgroundColor: option.primary }}
+        />
+        <span
+          className="size-5 rounded-r-md border border-l-0 border-border"
+          style={{ backgroundColor: option.accent }}
+        />
+      </span>
+      {option.label}
+    </button>
   );
 }

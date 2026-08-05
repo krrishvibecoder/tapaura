@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { Palette } from "./palette";
+import type { VCardData } from "./vcard";
 
 const slugSchema = z.object({ slug: z.string().min(1).max(60) });
 
@@ -19,6 +21,8 @@ export interface PublicClientPage {
   ctaLabel: string;
   ctaUrl: string | null;
   theme: string;
+  palette: Palette | null;
+  vcard: VCardData | null;
   links: PublicLink[];
 }
 
