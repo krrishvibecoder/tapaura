@@ -4,6 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const slugRe = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
+const hex = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Use a 6-digit hex colour");
+
+const paletteSchema = z.object({ primary: hex, accent: hex });
+
+const vcardSchema = z.object({
+  fullName: z.string().trim().max(80),
+  org: z.string().trim().max(80).nullable(),
+  role: z.string().trim().max(80).nullable(),
+  phone: z.string().trim().max(40).nullable(),
+  email: z.string().trim().max(120).nullable(),
+  website: z.string().trim().max(300).nullable(),
+  address: z.string().trim().max(200).nullable(),
+  note: z.string().trim().max(300).nullable(),
+  socials: z
+    .array(z.object({ label: z.string().trim().max(40), url: z.string().trim().max(300) }))
+    .max(12)
+    .default([]),
+});
+
 const clientFields = z.object({
   name: z.string().trim().min(1).max(80),
   slug: z.string().trim().toLowerCase().regex(slugRe, "Use lowercase letters, numbers and dashes"),
@@ -11,8 +30,10 @@ const clientFields = z.object({
   logo_path: z.string().trim().max(300).nullable(),
   cta_label: z.string().trim().min(1).max(40),
   cta_url: z.string().trim().max(500).nullable(),
-  theme: z.enum(["blue", "cream", "ink"]),
+  theme: z.enum(["blue", "cream", "ink", "custom"]),
   published: z.boolean(),
+  palette: paletteSchema.nullable().default(null),
+  vcard: vcardSchema.nullable().default(null),
 });
 
 
