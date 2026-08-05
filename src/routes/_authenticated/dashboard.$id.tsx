@@ -354,6 +354,7 @@ function EditClient() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {palette ? <SelectItem value="custom">Custom colours</SelectItem> : null}
                   {THEMES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
