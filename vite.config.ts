@@ -11,11 +11,14 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
-    // Build target for Vercel hosting (replaces the default Cloudflare target).
-    nitro: {
-      preset: "vercel",
-    },
+  },
+  // Build target for Vercel hosting (replaces the default Cloudflare target).
+  // Note: the Lovable sandbox forces cloudflare-module during local builds, so
+  // this preset only takes effect on Vercel itself.
+  nitro: {
+    preset: "vercel",
   },
 });
+
 
 
