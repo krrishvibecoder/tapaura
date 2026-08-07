@@ -2,6 +2,9 @@
 
 This project was originally built on Lovable Cloud. This guide walks you through moving the whole app to **Vercel** with your own **Supabase** backend and the custom domain `tapaura.boostinsta.co.in`.
 
+> **Security note:** The `.env` file in this repo currently holds the Lovable Cloud Supabase keys. Before pushing to GitHub, add `.env` to `.gitignore` and run `git rm --cached .env` so these keys are not published.
+
+
 ## 1. Create your own Supabase project
 
 1. Go to https://supabase.com and create a new project.
