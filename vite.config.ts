@@ -12,4 +12,13 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Build target for Vercel hosting (replaces the default Cloudflare target).
+  // Note: the Lovable sandbox forces cloudflare-module during local builds, so
+  // this preset only takes effect on Vercel itself.
+  nitro: {
+    preset: "vercel",
+  },
 });
+
+
+
