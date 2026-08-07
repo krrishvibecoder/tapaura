@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Build target for Vercel hosting (replaces the default Cloudflare target).
+    nitro: {
+      preset: "vercel",
+    },
+  },
 });
+
