@@ -1,114 +1,157 @@
-# Tapaura — Vercel + Self-hosted Supabase deployment guide
+# Tapaura — deploy to Vercel with your own Supabase
 
-This project was originally built on Lovable Cloud. This guide walks you through moving the whole app to **Vercel** with your own **Supabase** backend and the custom domain `tapaura.boostinsta.co.in`.
+Project values used in this guide:
 
-> **Security note:** The `.env` file in this repo currently holds the Lovable Cloud Supabase keys. Before pushing to GitHub, add `.env` to `.gitignore` and run `git rm --cached .env` so these keys are not published.
+| Thing | Value |
+|---|---|
+| Supabase URL | `https://uufddanpukimuyahglxz.supabase.co` |
+| Supabase project ID | `uufddanpukimuyahglxz` |
+| GitHub repo | `https://github.com/krrishvibecoder/tapaura` |
+| Current Vercel URL | `https://tapaura-git-main-krrishpurohit23-3817s-projects.vercel.app` |
+| Final domain | `https://tapaura.boostinsta.co.in` |
 
+---
 
-## 1. Create your own Supabase project
+## 0. Rotate your secret key first (important)
 
-1. Go to https://supabase.com and create a new project.
-2. Once it is ready, open the **Project Settings → API** page.
-3. Copy these values:
-   - `Project URL` (e.g. `https://xxxxx.supabase.co`)
-   - `Project API keys` → `anon public` key
-   - `Project API keys` → `service_role` secret key
+Your Supabase **secret / service_role key** was shared in chat, so treat it as compromised.
 
-4. Go to **SQL Editor → New query**, paste the entire contents of `tapaura_bootstrap.sql` from this repo, and run it.
-5. Go to **Storage → Buckets** and confirm that `client-logos` exists (private, 5 MB limit).
+1. Supabase → **Project Settings → API Keys**.
+2. **Rotate** the secret key.
+3. Use the new value **only** in Vercel environment variables — never in the repo, never in browser code.
 
-## 2. Set up Google sign-in
+Also make sure `.env` is not in git:
 
-1. In Supabase, go to **Authentication → Providers → Google**.
-2. Enable Google.
-3. Open the Google Cloud Console → **APIs & Services → Credentials**.
-4. Create an **OAuth 2.0 Web application** credential.
-5. Add these **Authorized JavaScript origins**:
-   - `https://tapaura.boostinsta.co.in`
-   - `http://localhost:3000` (for local testing)
-6. Add these **Authorized redirect URIs**:
-   - `https://tapaura.boostinsta.co.in/auth/callback`
-   - `http://localhost:3000/auth/callback`
-   - Copy the exact callback URL shown in Supabase Auth → Google → `Callback URL (for OAuth)` and add it too.
-7. Copy the Google Client ID and Secret into Supabase Auth → Google.
-8. Save.
+```bash
+git rm --cached .env
+git commit -m "stop tracking .env"
+```
 
-## 3. Environment variables on Vercel
+`.gitignore` in this repo already ignores `.env`.
 
-Add these environment variables in your Vercel project settings:
+---
 
-| Name | Value | Example |
-|------|-------|---------|
-| `SUPABASE_URL` | Your Supabase project URL | `https://xxxxx.supabase.co` |
-| `SUPABASE_PUBLISHABLE_KEY` | Your Supabase `anon public` key | `eyJ...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase `service_role` secret key | `eyJ...` |
-| `SUPABASE_PROJECT_ID` | Your Supabase project ID | `xxxxx` |
-| `VITE_SUPABASE_URL` | Same as `SUPABASE_URL` | `https://xxxxx.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same as `SUPABASE_PUBLISHABLE_KEY` | `eyJ...` |
-| `VITE_SUPABASE_PROJECT_ID` | Same as `SUPABASE_PROJECT_ID` | `xxxxx` |
+## 1. Create the database schema
 
-Do **not** commit real values to the repo. The `.env` file in the repo is only for local development.
+1. Supabase → **SQL Editor → New query**.
+2. Paste the full contents of `tapaura_bootstrap.sql` from this repo and run it.
+3. Supabase → **Storage → Buckets**: confirm `client-logos` exists (private, 5 MB limit).
 
-## 4. Deploy to Vercel
+---
 
-1. Push this repo to GitHub.
-2. Import the repo in the Vercel dashboard.
-3. Vercel will detect the project and use the settings from `vercel.json`.
-4. Add the environment variables from step 3.
-5. Deploy.
+## 2. Supabase Auth URL configuration
 
-### Routing
+Supabase → **Authentication → URL Configuration**:
 
-`vercel.json` is already configured so that dynamic pages like `tapaura.boostinsta.co.in/bookstore` work on direct visits and refresh.
+- **Site URL**: `https://tapaura.boostinsta.co.in`
+- **Redirect URLs** (add all of these):
+  - `https://tapaura.boostinsta.co.in`
+  - `https://tapaura.boostinsta.co.in/**`
+  - `https://tapaura-git-main-krrishpurohit23-3817s-projects.vercel.app`
+  - `https://tapaura-git-main-krrishpurohit23-3817s-projects.vercel.app/**`
+  - `http://localhost:8080`
+  - `http://localhost:8080/**`
 
-## 5. Add the custom domain
+The app signs in with `redirectTo: window.location.origin`, so each origin you use must be listed here.
 
-1. In Vercel, go to **Project Settings → Domains**.
-2. Add `tapaura.boostinsta.co.in`.
-3. In your DNS provider (wherever `boostinsta.co.in` is managed), add the CNAME/A records that Vercel shows you.
-4. Wait for DNS propagation and SSL issuance.
+---
 
-## 6. Update Google OAuth origins and redirect URIs
+## 3. Google sign-in
 
-After the Vercel domain is live, return to Google Cloud Console and add the final origin:
+### Google Cloud Console → APIs & Services → Credentials
+
+Create an **OAuth client ID → Web application**.
+
+**Authorized JavaScript origins**
 - `https://tapaura.boostinsta.co.in`
+- `https://tapaura-git-main-krrishpurohit23-3817s-projects.vercel.app`
+- `http://localhost:8080`
 
-And the final redirect URI:
-- `https://tapaura.boostinsta.co.in/auth/callback`
+**Authorized redirect URIs** (this one is Supabase's callback, not your site)
+- `https://uufddanpukimuyahglxz.supabase.co/auth/v1/callback`
 
-Also update the same redirect URI in Supabase Auth → Google → Callback URL.
+Also configure the OAuth consent screen with scopes: `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`.
 
-## 7. How the public link-tree URLs work
+### Supabase
 
-The route file `src/routes/$slug.tsx` already handles any short slug, so:
+**Authentication → Providers → Google** → enable, paste the Google **Client ID** and **Client Secret**, save.
+
+---
+
+## 4. Vercel environment variables
+
+Vercel → **Project Settings → Environment Variables** (add to Production, Preview, and Development):
+
+| Name | Value |
+|---|---|
+| `SUPABASE_URL` | `https://uufddanpukimuyahglxz.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | your `sb_publishable_...` anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | your **rotated** `sb_secret_...` key |
+| `SUPABASE_PROJECT_ID` | `uufddanpukimuyahglxz` |
+| `VITE_SUPABASE_URL` | same as `SUPABASE_URL` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | same as `SUPABASE_PUBLISHABLE_KEY` |
+| `VITE_SUPABASE_PROJECT_ID` | `uufddanpukimuyahglxz` |
+
+Only the `VITE_*` values reach the browser. The service role key stays server-side.
+
+After adding them, trigger a **redeploy** (env vars are baked in at build time).
+
+---
+
+## 5. Custom domain
+
+1. Vercel → **Project Settings → Domains** → add `tapaura.boostinsta.co.in`.
+2. In the DNS for `boostinsta.co.in`, add the `CNAME` record Vercel shows:
+   - Name: `tapaura`
+   - Value: `cname.vercel-dns.com`
+3. Wait for DNS + SSL.
+4. Set it as the primary domain, then confirm it is listed in Google origins (step 3) and Supabase redirect URLs (step 2).
+
+---
+
+## 6. How the client link-tree URLs work
+
+`src/routes/$slug.tsx` handles any slug, so once an agency creates and publishes a client:
 
 - `https://tapaura.boostinsta.co.in/bookstore`
 - `https://tapaura.boostinsta.co.in/acme`
 - `https://tapaura.boostinsta.co.in/rl-infinity`
 
-will all work as long as the agency has created a client with that slug in the dashboard and published it.
+all work on direct visit and on refresh — `vercel.json` rewrites non-asset paths into the app.
 
-Reserved words like `auth`, `dashboard`, `api`, `admin`, `login`, etc. are blocked from being used as slugs.
+Reserved words (`auth`, `dashboard`, `api`, `admin`, `login`, …) are blocked as slugs by a database trigger.
 
-## 8. Local testing
+---
+
+## 7. Local development
 
 ```bash
 bun install
 bun run dev
 ```
 
-The local dev server will use the values in `.env`. For local testing, you can point `.env` at your own Supabase project, or temporarily keep using the Lovable Cloud backend.
+Uses the values in your local `.env` (see `.env.example`). Dev server runs on `http://localhost:8080`.
 
-## 9. What was changed to support Vercel
+---
 
-- `src/routes/auth.tsx` now uses standard `supabase.auth.signInWithOAuth` instead of the Lovable Cloud managed OAuth helper.
-- `src/integrations/lovable/index.ts` was removed.
-- `package.json` no longer depends on `@lovable.dev/cloud-auth-js`.
-- `vite.config.ts` now sets `nitro: { preset: "vercel" }`.
-- `vercel.json` handles SPA routing and asset caching.
+## 8. What in the code supports this
 
-## 10. Notes
+- `src/routes/auth.tsx` uses standard `supabase.auth.signInWithOAuth` (no Lovable-managed OAuth broker).
+- `src/integrations/lovable/` removed; `@lovable.dev/cloud-auth-js` removed from `package.json`.
+- `vite.config.ts` sets `nitro: { preset: "vercel" }`.
+- `vercel.json` handles slug routing and asset caching.
 
-- The Lovable sandbox build still shows `preset: cloudflare-module` because the local sandbox environment forces it. The `vercel` preset will take effect on Vercel itself.
-- The dashboard is protected and only works for signed-in users. Public pages (`/$slug`) are rendered server-side for SEO and are visible to everyone.
-- All private data is enforced by Supabase RLS policies, not by the frontend alone.
+Note: local sandbox builds still report the Cloudflare preset — that is a sandbox override; the Vercel preset applies on Vercel.
+
+---
+
+## 9. Checklist
+
+- [ ] Secret key rotated
+- [ ] `.env` untracked in git
+- [ ] `tapaura_bootstrap.sql` run
+- [ ] Supabase Site URL + redirect URLs set
+- [ ] Google OAuth client created and pasted into Supabase
+- [ ] Vercel env vars added and redeployed
+- [ ] Custom domain live
+- [ ] Sign in works, then create a client and open `/<slug>` in a private window
