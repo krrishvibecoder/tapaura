@@ -76,6 +76,20 @@ Also configure the OAuth consent screen with scopes: `openid`, `.../auth/userinf
 
 **Authentication → Providers → Google** → enable, paste the Google **Client ID** and **Client Secret**, save.
 
+### Troubleshooting Google sign-in
+
+| Error you see | Cause | Fix |
+|---|---|---|
+| `validation_failed` / `Unsupported provider: missing OAuth secret` | Google provider is not enabled in your Supabase project, or the Client Secret field is empty | Supabase → Authentication → Providers → Google: enable it and paste both Client ID and Client Secret, then save |
+| `Unsupported provider: provider is not enabled` | Same as above — provider toggle is off | Enable the Google provider and save |
+| `redirect_uri_mismatch` (Google screen) | The Supabase callback URL is missing from the Google OAuth client | Add `https://uufddanpukimuyahglxz.supabase.co/auth/v1/callback` under Authorized redirect URIs |
+| Google succeeds but you land back on the sign-in page with no session | The origin you signed in from is not in Supabase's redirect allow-list | Add that exact origin (and `/**`) under Authentication → URL Configuration → Redirect URLs |
+| `access_blocked` / `app not verified` | OAuth consent screen still in testing | Add your Google account as a test user, or publish the consent screen |
+
+Provider changes take effect immediately — no Vercel redeploy needed.
+
+
+
 ---
 
 ## 4. Vercel environment variables

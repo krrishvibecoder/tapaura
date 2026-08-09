@@ -78,7 +78,9 @@ function AuthPage() {
       },
     });
     if (error) {
-      toast.error("Google sign-in failed. Please try again.");
+      // Surface the real provider error (e.g. "Unsupported provider: missing OAuth
+      // secret") so misconfiguration is obvious instead of hidden behind generic copy.
+      toast.error(error.message || "Google sign-in failed. Please try again.");
       setBusy(false);
       return;
     }
