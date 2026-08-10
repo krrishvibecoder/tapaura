@@ -139,12 +139,37 @@ Reserved words (`auth`, `dashboard`, `api`, `admin`, `login`, …) are blocked a
 
 ## 7. Local development
 
+The local preview should use the **same backend** as Vercel so you can test against the same data and auth setup.
+
+### 7.1 Local `.env` values
+
+Copy `.env.example` to `.env` and confirm these values:
+
+| Name | Value |
+|---|---|
+| `SUPABASE_URL` | `https://uufddanpukimuyahglxz.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_gmg0_ImXARlOyAnzujBJvQ_xdxZ5co9` |
+| `SUPABASE_PROJECT_ID` | `uufddanpukimuyahglxz` |
+| `SUPABASE_SERVICE_ROLE_KEY` | your rotated `sb_secret_...` key (uncomment the line in `.env`) |
+| `VITE_SUPABASE_URL` | same as `SUPABASE_URL` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | same as `SUPABASE_PUBLISHABLE_KEY` |
+| `VITE_SUPABASE_PROJECT_ID` | `uufddanpukimuyahglxz` |
+
+`SUPABASE_SERVICE_ROLE_KEY` is required for logo storage to work in the local preview (the public link page uses admin storage access). If you do not add it, logo uploads and public page rendering will fail locally even though auth and links work.
+
+### 7.2 Start the dev server
+
 ```bash
 bun install
 bun run dev
 ```
 
-Uses the values in your local `.env` (see `.env.example`). Dev server runs on `http://localhost:8080`.
+Dev server runs on `http://localhost:8080`.
+
+### 7.3 Confirm local preview matches Vercel
+
+After signing in locally, create a client and upload a logo. The data should appear in the same Supabase project (`uufddanpukimuyahglxz`) that Vercel uses.
+
 
 ---
 
